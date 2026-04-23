@@ -2,3 +2,4 @@
 *.txt
 *.o
 pa3
+/perf-testfiles
