@@ -1,11 +1,20 @@
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <algorithm>
 #include <utility>
 #include <iostream>
 #include <mpi.h>
 #include <cassert>
 #include "functions.h"
+
+namespace std {
+    template <>
+    struct hash<std::pair<int, int>> {
+        size_t operator()(const std::pair<int, int>& p) const {
+            return hash<int>()(p.first) ^ (hash<int>()(p.second) << 1);
+        }
+    };
+}
 
 void flatten_matrix(std::vector<std::pair<std::pair<int, int>, int>> &matrix,
                     std::vector<int> &flattened)
@@ -38,7 +47,7 @@ void spgemm_2d(int m, int p, int n,
     flatten_matrix(A, flattened_A);
     flatten_matrix(B, flattened_B);
 
-    std::map<std::pair<int, int>, int> C_map;
+    std::unordered_map<std::pair<int, int>, int> C_map;
     for (int i = 0; i < q; ++i) {
         // bcast A block from rank i in its row
         int A_size = (i == pc) ? static_cast<int>(flattened_A.size()) : 0;
