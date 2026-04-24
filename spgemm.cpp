@@ -1,20 +1,11 @@
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <algorithm>
 #include <utility>
 #include <iostream>
 #include <mpi.h>
 #include <cassert>
 #include "functions.h"
-
-namespace std {
-    template <>
-    struct hash<std::pair<int, int>> {
-        size_t operator()(const std::pair<int, int>& p) const {
-            return hash<int>()(p.first) ^ (hash<int>()(p.second) << 1);
-        }
-    };
-}
 
 void flatten_matrix(std::vector<std::pair<std::pair<int, int>, int>> &matrix,
                     std::vector<int> &flattened)
@@ -47,12 +38,18 @@ void spgemm_2d(int m, int p, int n,
     flatten_matrix(A, flattened_A);
     flatten_matrix(B, flattened_B);
 
-    std::unordered_map<std::pair<int, int>, int> C_map;
+    std::map<std::pair<int, int>, int> C_map;
+
+    int *A_sizes = (int*) malloc(q * sizeof(int));
+    int *B_sizes = (int*) malloc(q * sizeof(int));
+    int local_A_size = (int) (flattened_A.size());
+    int local_B_size = (int) (flattened_B.size());
+    MPI_Allgather(&local_A_size, 1, MPI_INT, A_sizes, 1, MPI_INT, row_comm);
+    MPI_Allgather(&local_B_size, 1, MPI_INT, B_sizes, 1, MPI_INT, col_comm);
+
     for (int i = 0; i < q; ++i) {
         // bcast A block from rank i in its row
-        int A_size = (i == pc) ? static_cast<int>(flattened_A.size()) : 0;
-        MPI_Bcast(&A_size, 1, MPI_INT, i, row_comm);
-        
+        int A_size = A_sizes[i];
         std::vector<int> recv_A_flat(A_size);
         if (i == pc) {
             recv_A_flat = flattened_A;
@@ -60,9 +57,7 @@ void spgemm_2d(int m, int p, int n,
         MPI_Bcast(recv_A_flat.data(), A_size, MPI_INT, i, row_comm);
 
         // bcast B block from rank i in its column
-        int B_size = (i == pr) ? static_cast<int>(flattened_B.size()) : 0;
-        MPI_Bcast(&B_size, 1, MPI_INT, i, col_comm);
-        
+        int B_size = B_sizes[i];
         std::vector<int> recv_B_flat(B_size);
         if (i == pr) {
             recv_B_flat = flattened_B;
