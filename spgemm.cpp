@@ -39,62 +39,36 @@ void spgemm_2d(int m, int p, int n,
     flatten_matrix(B, flattened_B);
 
     // shift A left pr positions
-    int send_to = (pc - pr + q) % q;
-    int recv_from = (pc + pr) % q;
+    for (int i = 0; i < pr; ++i) {
+        int send_to = (pc - 1 + q) % q;
+        int recv_from = (pc + 1) % q;
 
-    int local_A_size = flattened_A.size();
-    int recv_A_size;
-    MPI_Sendrecv(&local_A_size, 1, MPI_INT, send_to, 0,
-                    &recv_A_size, 1, MPI_INT, recv_from, 0, row_comm, MPI_STATUS_IGNORE);
-    std::vector<int> temp_A;
-    temp_A.resize(recv_A_size);
-    MPI_Sendrecv(flattened_A.data(), local_A_size, MPI_INT, send_to, 0,
-                    temp_A.data(), recv_A_size, MPI_INT, recv_from, 0, row_comm, MPI_STATUS_IGNORE);
-    flattened_A = temp_A;
-
-    // for (int i = 0; i < pr; ++i) {
-    //     int send_to = (pc - 1 + q) % q;
-    //     int recv_from = (pc + 1) % q;
-
-    //     int local_A_size = flattened_A.size();
-    //     int recv_A_size;
-    //     MPI_Sendrecv(&local_A_size, 1, MPI_INT, send_to, 0,
-    //                  &recv_A_size, 1, MPI_INT, recv_from, 0, row_comm, MPI_STATUS_IGNORE);
-    //     std::vector<int> temp_A;
-    //     temp_A.resize(recv_A_size);
-    //     MPI_Sendrecv(flattened_A.data(), local_A_size, MPI_INT, send_to, 0,
-    //                  temp_A.data(), recv_A_size, MPI_INT, recv_from, 0, row_comm, MPI_STATUS_IGNORE);
-    //     flattened_A = temp_A;
-    // }
+        int local_A_size = flattened_A.size();
+        int recv_A_size;
+        MPI_Sendrecv(&local_A_size, 1, MPI_INT, send_to, 0,
+                     &recv_A_size, 1, MPI_INT, recv_from, 0, row_comm, MPI_STATUS_IGNORE);
+        std::vector<int> temp_A;
+        temp_A.resize(recv_A_size);
+        MPI_Sendrecv(flattened_A.data(), local_A_size, MPI_INT, send_to, 0,
+                     temp_A.data(), recv_A_size, MPI_INT, recv_from, 0, row_comm, MPI_STATUS_IGNORE);
+        flattened_A = temp_A;
+    }
 
     // shift B up pc positions
-    send_to = (pr - pc + q) % q;
-    recv_from = (pr + pc) % q;
+    for (int i = 0; i < pc; ++i) {
+        int send_to = (pr - 1 + q) % q;
+        int recv_from = (pr + 1) % q;
 
-    int local_B_size = flattened_B.size();
-    int recv_B_size;
-    MPI_Sendrecv(&local_B_size, 1, MPI_INT, send_to, 0,
-                    &recv_B_size, 1, MPI_INT, recv_from, 0, col_comm, MPI_STATUS_IGNORE);
-    std::vector<int> temp_B;
-    temp_B.resize(recv_B_size);
-    MPI_Sendrecv(flattened_B.data(), local_B_size, MPI_INT, send_to, 0,
-                    temp_B.data(), recv_B_size, MPI_INT, recv_from, 0, col_comm, MPI_STATUS_IGNORE);
-    flattened_B = temp_B;
-
-    // for (int i = 0; i < pc; ++i) {
-    //     int send_to = (pr - 1 + q) % q;
-    //     int recv_from = (pr + 1) % q;
-
-    //     int local_B_size = flattened_B.size();
-    //     int recv_B_size;
-    //     MPI_Sendrecv(&local_B_size, 1, MPI_INT, send_to, 0,
-    //                  &recv_B_size, 1, MPI_INT, recv_from, 0, col_comm, MPI_STATUS_IGNORE);
-    //     std::vector<int> temp_B;
-    //     temp_B.resize(recv_B_size);
-    //     MPI_Sendrecv(flattened_B.data(), local_B_size, MPI_INT, send_to, 0,
-    //                  temp_B.data(), recv_B_size, MPI_INT, recv_from, 0, col_comm, MPI_STATUS_IGNORE);
-    //     flattened_B = temp_B;
-    // }
+        int local_B_size = flattened_B.size();
+        int recv_B_size;
+        MPI_Sendrecv(&local_B_size, 1, MPI_INT, send_to, 0,
+                     &recv_B_size, 1, MPI_INT, recv_from, 0, col_comm, MPI_STATUS_IGNORE);
+        std::vector<int> temp_B;
+        temp_B.resize(recv_B_size);
+        MPI_Sendrecv(flattened_B.data(), local_B_size, MPI_INT, send_to, 0,
+                     temp_B.data(), recv_B_size, MPI_INT, recv_from, 0, col_comm, MPI_STATUS_IGNORE);
+        flattened_B = temp_B;
+    }
 
     // loop q times:
     //     compute C += A*B
