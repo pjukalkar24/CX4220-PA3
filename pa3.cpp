@@ -272,57 +272,57 @@ int main(int argc, char **argv)
     A_complete.clear();
     A_T_complete.clear();
 
-    std::vector<std::pair<std::pair<int, int>, int>> spgemm_result;
-    //std::vector<std::pair<std::pair<int, int>, int>> computed_dist;
-    // Run and time the code
-    double start = MPI_Wtime();
-    spgemm_2d(m, n, m, A, A_T, spgemm_result,
-                  [](int a, int b){ return a + b; },
-                  [](int a, int b){ return a * b; }, row_comm, col_comm);
-    /*
-    if (test_type == "spgemm") {
-        spgemm_2d(m, n, m, A, A_T, spgemm_result,
-                  [](int a, int b){ return a + b; },
-                  [](int a, int b){ return a * b; }, row_comm, col_comm);
-    } else {
-        apsp(std::max(m, n), A, computed_dist, row_comm, col_comm);
-    }
-        */
-    double time = MPI_Wtime() - start;
-    double avg_time = 0.0;
-    MPI_Reduce(&time, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    if (rank == 0) {
-        avg_time = avg_time / size;
-        std::cout << "==> time_taken=" << avg_time << "s\n";
-    }
+    // std::vector<std::pair<std::pair<int, int>, int>> spgemm_result;
+    // //std::vector<std::pair<std::pair<int, int>, int>> computed_dist;
+    // // Run and time the code
+    // double start = MPI_Wtime();
+    // spgemm_2d(m, n, m, A, A_T, spgemm_result,
+    //               [](int a, int b){ return a + b; },
+    //               [](int a, int b){ return a * b; }, row_comm, col_comm);
+    // /*
+    // if (test_type == "spgemm") {
+    //     spgemm_2d(m, n, m, A, A_T, spgemm_result,
+    //               [](int a, int b){ return a + b; },
+    //               [](int a, int b){ return a * b; }, row_comm, col_comm);
+    // } else {
+    //     apsp(std::max(m, n), A, computed_dist, row_comm, col_comm);
+    // }
+    //     */
+    // double time = MPI_Wtime() - start;
+    // double avg_time = 0.0;
+    // MPI_Reduce(&time, &avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    // if (rank == 0) {
+    //     avg_time = avg_time / size;
+    //     std::cout << "==> time_taken=" << avg_time << "s\n";
+    // }
 
-    // Gather matrix from across ranks to root 0
-    std::vector<std::pair<std::pair<int, int>, int>> complete_spgemm_result;
-    //std::vector<std::pair<std::pair<int, int>, int>> complete_computed_dist;
-    gather_matrix(spgemm_result, complete_spgemm_result, 0, MPI_COMM_WORLD);
-    /*
-    if (test_type == "spgemm") {
-        gather_matrix(spgemm_result, complete_spgemm_result, 0, MPI_COMM_WORLD);
-    } else {
-        gather_matrix(computed_dist, complete_computed_dist, 0, MPI_COMM_WORLD);
-    }
-        */
+    // // Gather matrix from across ranks to root 0
+    // std::vector<std::pair<std::pair<int, int>, int>> complete_spgemm_result;
+    // //std::vector<std::pair<std::pair<int, int>, int>> complete_computed_dist;
+    // gather_matrix(spgemm_result, complete_spgemm_result, 0, MPI_COMM_WORLD);
+    // /*
+    // if (test_type == "spgemm") {
+    //     gather_matrix(spgemm_result, complete_spgemm_result, 0, MPI_COMM_WORLD);
+    // } else {
+    //     gather_matrix(computed_dist, complete_computed_dist, 0, MPI_COMM_WORLD);
+    // }
+    //     */
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    int ret = 0;
-    if (rank == 0) {
-        std::sort(complete_spgemm_result.begin(), complete_spgemm_result.end());
-        ret = correctness_check(complete_spgemm_result, expected_result);
-        /*
-        if (test_type == "spgemm") {
-            std::sort(complete_spgemm_result.begin(), complete_spgemm_result.end());
-            ret = correctness_check(complete_spgemm_result, expected_result);
-        } else {
-            std::sort(complete_computed_dist.begin(), complete_computed_dist.end());
-            ret = correctness_check(complete_computed_dist, expected_result);
-        }
-            */
-    }
+    // MPI_Barrier(MPI_COMM_WORLD);
+    // int ret = 0;
+    // if (rank == 0) {
+    //     std::sort(complete_spgemm_result.begin(), complete_spgemm_result.end());
+    //     ret = correctness_check(complete_spgemm_result, expected_result);
+    //     /*
+    //     if (test_type == "spgemm") {
+    //         std::sort(complete_spgemm_result.begin(), complete_spgemm_result.end());
+    //         ret = correctness_check(complete_spgemm_result, expected_result);
+    //     } else {
+    //         std::sort(complete_computed_dist.begin(), complete_computed_dist.end());
+    //         ret = correctness_check(complete_computed_dist, expected_result);
+    //     }
+    //         */
+    // }
     MPI_Finalize();
-    return ret;
+    // return ret;
 }

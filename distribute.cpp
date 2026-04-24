@@ -12,8 +12,6 @@ void distribute_matrix_2d(int m, int n, std::vector<std::pair<std::pair<int, int
                           std::vector<std::pair<std::pair<int, int>, int>> &local_matrix,
                           int root, MPI_Comm comm_2d)
 {
-    // TODO: Write your code here
-
     // m, n: rows x cols
     // full_matrix: [((i,j), w), ...]
     // local_matrix: [((i,j), w), ...]
@@ -53,13 +51,12 @@ void distribute_matrix_2d(int m, int n, std::vector<std::pair<std::pair<int, int
     sendbuf.reserve(full_matrix.size());
 
     if (rank == 0) {
-        std::vector<std::vector<std::pair<std::pair<int, int>, int>>> partitioned;
-        partitioned.resize(size);
+        std::vector<std::vector<std::pair<std::pair<int, int>, int>>> partitioned(size);
 
         // fill in sendcounts, displs, and partitioned
-        for (auto [idx, w] : full_matrix) {
+        for (auto entry : full_matrix) {
             // get row and column of element
-            int r = idx.first; int c = idx.second;
+            int r = entry.first.first; int c = entry.first.second;
 
             // get destination processor in grid
             int pr = r * q / m;
@@ -72,7 +69,7 @@ void distribute_matrix_2d(int m, int n, std::vector<std::pair<std::pair<int, int
 
             // update sendcounts, displacements
             ++sendcounts[dest_rank];
-            partitioned[dest_rank].push_back({idx, w});
+            partitioned[dest_rank].push_back(entry);
         }
 
         int curr_displ = 0;
@@ -89,8 +86,8 @@ void distribute_matrix_2d(int m, int n, std::vector<std::pair<std::pair<int, int
     local_matrix.resize(recvcount);
 
     // scatter matrix entries to all processors
-    MPI_Scatterv(sendbuf.data(), sendcounts.data(), displs.data(), mpi_entry_t, local_matrix.data(),
-                 recvcount, mpi_entry_t, root, comm_2d);
+    MPI_Scatterv(sendbuf.data(), sendcounts.data(), displs.data(), mpi_entry_t,
+                 local_matrix.data(), recvcount, mpi_entry_t, root, comm_2d);
 
 
     // if (m == 4) {

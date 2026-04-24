@@ -101,10 +101,9 @@ void spgemm_2d(int m, int p, int n,
         }
     }
 
-    C.resize(C_map.size());
-    int idx = 0;
+    C.clear();
     for (const auto &entry : C_map) {
-        C[idx++] = {entry.first, entry.second};
+        C.push_back({entry.first, entry.second});
     }
 
     // if (pr == 1 && pc == 0) {
