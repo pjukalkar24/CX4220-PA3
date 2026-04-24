@@ -72,6 +72,7 @@ void distribute_matrix_2d(int m, int n, std::vector<std::pair<std::pair<int, int
             partitioned[dest_rank].push_back(entry);
         }
 
+        // update displacements and flatten by destination
         int curr_displ = 0;
         for (int i = 0; i < size; ++i) {
             displs[i] = curr_displ;
@@ -88,17 +89,4 @@ void distribute_matrix_2d(int m, int n, std::vector<std::pair<std::pair<int, int
     // scatter matrix entries to all processors
     MPI_Scatterv(sendbuf.data(), sendcounts.data(), displs.data(), mpi_entry_t,
                  local_matrix.data(), recvcount, mpi_entry_t, root, comm_2d);
-
-
-    // if (m == 4) {
-    //     std::cout << "==> A ";
-    // } else {
-    //     std::cout << "==> A_T ";
-    // }
-
-    // std::cout << "==> Rank " << rank << "; " << recvcount << " entries; " "local_matrix: [";
-    // for (auto [idx, w] : local_matrix) {
-    //     std::cout << "((" << idx.first << "," << idx.second << ")," << w << "), ";
-    // }
-    // std::cout << "]\n";
 }
