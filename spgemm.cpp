@@ -39,17 +39,11 @@ void spgemm_2d(int m, int p, int n,
     flatten_matrix(B, flattened_B);
 
     std::map<std::pair<int, int>, int> C_map;
-
-    int *A_sizes = (int*) malloc(q * sizeof(int));
-    int *B_sizes = (int*) malloc(q * sizeof(int));
-    int local_A_size = (int) (flattened_A.size());
-    int local_B_size = (int) (flattened_B.size());
-    MPI_Allgather(&local_A_size, 1, MPI_INT, A_sizes, 1, MPI_INT, row_comm);
-    MPI_Allgather(&local_B_size, 1, MPI_INT, B_sizes, 1, MPI_INT, col_comm);
-
     for (int i = 0; i < q; ++i) {
         // bcast A block from rank i in its row
-        int A_size = A_sizes[i];
+        int A_size = (i == pc) ? static_cast<int>(flattened_A.size()) : 0;
+        MPI_Bcast(&A_size, 1, MPI_INT, i, row_comm);
+        
         std::vector<int> recv_A_flat(A_size);
         if (i == pc) {
             recv_A_flat = flattened_A;
@@ -57,7 +51,9 @@ void spgemm_2d(int m, int p, int n,
         MPI_Bcast(recv_A_flat.data(), A_size, MPI_INT, i, row_comm);
 
         // bcast B block from rank i in its column
-        int B_size = B_sizes[i];
+        int B_size = (i == pr) ? static_cast<int>(flattened_B.size()) : 0;
+        MPI_Bcast(&B_size, 1, MPI_INT, i, col_comm);
+        
         std::vector<int> recv_B_flat(B_size);
         if (i == pr) {
             recv_B_flat = flattened_B;
@@ -65,17 +61,27 @@ void spgemm_2d(int m, int p, int n,
         MPI_Bcast(recv_B_flat.data(), B_size, MPI_INT, i, col_comm);
 
         // sparse matrix multiplication
+        // separate B by row
+        std::map<int, std::vector<std::pair<int, int>>> B_by_row;
+        for (int j = 0; j < B_size; j += 3) {
+            int b_i = recv_B_flat[j];
+            int b_j = recv_B_flat[j + 1];
+            int b_w = recv_B_flat[j + 2];
+            B_by_row[b_i].push_back({b_j, b_w});
+        }
+
         for (int i = 0; i < A_size; i += 3) {
             int a_i = recv_A_flat[i];
             int a_j = recv_A_flat[i + 1];
             int a_w = recv_A_flat[i + 2];
 
-            for (int j = 0; j < B_size; j += 3) {
-                int b_i = recv_B_flat[j];
-                int b_j = recv_B_flat[j + 1];
-                int b_w = recv_B_flat[j + 2];
+            auto it = B_by_row.find(a_j);
+            if (it != B_by_row.end()) {
+                const auto &b_entries = it->second;
+                for (const auto &b_entry : b_entries) {
+                    int b_j = b_entry.first;
+                    int b_w = b_entry.second;
 
-                if (a_j == b_i) {
                     std::pair<int, int> c_idx = {a_i, b_j};
                     int c_w = times(a_w, b_w);
                     if (C_map.find(c_idx) != C_map.end()) {
@@ -85,6 +91,22 @@ void spgemm_2d(int m, int p, int n,
                     }
                 }
             }
+
+            // for (int j = 0; j < B_size; j += 3) {
+            //     int b_i = recv_B_flat[j];
+            //     int b_j = recv_B_flat[j + 1];
+            //     int b_w = recv_B_flat[j + 2];
+
+            //     if (a_j == b_i) {
+            //         std::pair<int, int> c_idx = {a_i, b_j};
+            //         int c_w = times(a_w, b_w);
+            //         if (C_map.find(c_idx) != C_map.end()) {
+            //             C_map[c_idx] = plus(C_map[c_idx], c_w);
+            //         } else {
+            //             C_map[c_idx] = c_w;
+            //         }
+            //     }
+            // }
         }
     }
 
