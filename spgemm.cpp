@@ -1,21 +1,11 @@
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <algorithm>
 #include <utility>
 #include <iostream>
 #include <mpi.h>
 #include <cassert>
 #include "functions.h"
-
-// Hash function for std::pair<int, int>
-namespace std {
-    template <>
-    struct hash<std::pair<int, int>> {
-        size_t operator()(const std::pair<int, int>& p) const {
-            return hash<int>()(p.first) ^ (hash<int>()(p.second) << 1);
-        }
-    };
-}
 
 void spgemm_2d(int m, int p, int n,
                std::vector<std::pair<std::pair<int,int>, int>> &A,
@@ -90,7 +80,7 @@ void spgemm_2d(int m, int p, int n,
                     recv_B.data(), B_sendcounts.data(), B_displs.data(), mpi_entry_t, col_comm);
 
     // local matrix multiplication
-    std::unordered_map<std::pair<int, int>, int> C_map;
+    std::map<std::pair<int, int>, int> C_map;
     for (const auto &a_entry : recv_A) {
         int a_i = a_entry.first.first;
         int a_k = a_entry.first.second;
