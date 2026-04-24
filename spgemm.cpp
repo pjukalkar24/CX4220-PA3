@@ -78,33 +78,33 @@ void spgemm_2d(int m, int p, int n,
                     recv_B.data(), B_sendcounts.data(), B_displs.data(), mpi_entry_t, col_comm);
 
     // local matrix multiplication
-    std::map<std::pair<int, int>, int> C_map;
-    for (const auto &a_entry : recv_A) {
-        int a_i = a_entry.first.first;
-        int a_k = a_entry.first.second;
-        int a_w = a_entry.second;
+    // std::map<std::pair<int, int>, int> C_map;
+    // for (const auto &a_entry : recv_A) {
+    //     int a_i = a_entry.first.first;
+    //     int a_k = a_entry.first.second;
+    //     int a_w = a_entry.second;
 
-        for (const auto &b_entry : recv_B) {
-            int b_k = b_entry.first.first;
-            int b_j = b_entry.first.second;
-            int b_w = b_entry.second;
+    //     for (const auto &b_entry : recv_B) {
+    //         int b_k = b_entry.first.first;
+    //         int b_j = b_entry.first.second;
+    //         int b_w = b_entry.second;
 
-            if (a_k == b_k) {
-                std::pair<int, int> c_idx = {a_i, b_j};
-                int c_val = times(a_w, b_w);
-                if (C_map.find(c_idx) != C_map.end()) {
-                    C_map[c_idx] = plus(C_map[c_idx], c_val);
-                } else {
-                    C_map[c_idx] = c_val;
-                }
-            }
-        }
-    }
+    //         if (a_k == b_k) {
+    //             std::pair<int, int> c_idx = {a_i, b_j};
+    //             int c_val = times(a_w, b_w);
+    //             if (C_map.find(c_idx) != C_map.end()) {
+    //                 C_map[c_idx] = plus(C_map[c_idx], c_val);
+    //             } else {
+    //                 C_map[c_idx] = c_val;
+    //             }
+    //         }
+    //     }
+    // }
 
-    C.clear();
-    for (const auto &entry : C_map) {
-        C.push_back({entry.first, entry.second});
-    }
+    // C.clear();
+    // for (const auto &entry : C_map) {
+    //     C.push_back({entry.first, entry.second});
+    // }
 
     // if (pr == 1 && pc == 0) {
     //     std::cout << "blocks of A received: " << recv_A.size() << "\n";
