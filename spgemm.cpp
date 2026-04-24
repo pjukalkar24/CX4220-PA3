@@ -46,6 +46,7 @@ void spgemm_2d(int m, int p, int n,
     // allgather sendcounts from each proc in row
     std::vector<int> A_sendcounts(q, 0);
     int A_local_size = A.size();
+    std::cout << "Rank (" << pr << "," << pc << ") has " << A_local_size << " entries of A\n";
     MPI_Allgather(&A_local_size, 1, MPI_INT, A_sendcounts.data(), 1, MPI_INT, row_comm);
     // calculate displacements
     std::vector<int> A_displs(q, 0);
@@ -56,8 +57,8 @@ void spgemm_2d(int m, int p, int n,
     }
     // allgatherv blocks of A across row
     std::vector<std::pair<std::pair<int,int>, int>> recv_A(total_A_size);
-    MPI_Allgatherv(A.data(), A.size(), mpi_entry_t,
-                    recv_A.data(), A_sendcounts.data(), A_displs.data(), mpi_entry_t, row_comm);
+    // MPI_Allgatherv(A.data(), A.size(), mpi_entry_t,
+    //                 recv_A.data(), A_sendcounts.data(), A_displs.data(), mpi_entry_t, row_comm);
 
 
     // allgather B across the col
@@ -65,6 +66,7 @@ void spgemm_2d(int m, int p, int n,
     std::vector<int> B_sendcounts(q, 0);
     int B_local_size = B.size();
     MPI_Allgather(&B_local_size, 1, MPI_INT, B_sendcounts.data(), 1, MPI_INT, col_comm);
+    std::cout << "Rank (" << pr << "," << pc << ") has " << B_local_size << " entries of B\n";
     // calculate displs
     std::vector<int> B_displs(q, 0);
     int total_B_size = 0;
@@ -74,8 +76,8 @@ void spgemm_2d(int m, int p, int n,
     }
     // allgatherv blocks of B across col
     std::vector<std::pair<std::pair<int,int>, int>> recv_B(total_B_size);
-    MPI_Allgatherv(B.data(), B.size(), mpi_entry_t,
-                    recv_B.data(), B_sendcounts.data(), B_displs.data(), mpi_entry_t, col_comm);
+    // MPI_Allgatherv(B.data(), B.size(), mpi_entry_t,
+    //                 recv_B.data(), B_sendcounts.data(), B_displs.data(), mpi_entry_t, col_comm);
 
     // local matrix multiplication
     // std::map<std::pair<int, int>, int> C_map;
