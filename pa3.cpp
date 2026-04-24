@@ -262,6 +262,10 @@ int main(int argc, char **argv)
     MPI_Comm col_comm;
     MPI_Comm_split(comm_2d, co[1], rank, &col_comm);
 
+    if (rank == 0) {
+        std::cout << "Done reading file\n";
+    }
+
     std::vector<std::pair<std::pair<int, int>, int>> A;
     std::vector<std::pair<std::pair<int, int>, int>> A_T;
     distribute_matrix_2d(m, n, A_complete, A, 0, comm_2d);
@@ -271,6 +275,10 @@ int main(int argc, char **argv)
     // Maybe we can free up some memory with this
     A_complete.clear();
     A_T_complete.clear();
+
+    if (rank == 0) {
+        std::cout << "Done with distribute\n";
+    }
 
     std::vector<std::pair<std::pair<int, int>, int>> spgemm_result;
     //std::vector<std::pair<std::pair<int, int>, int>> computed_dist;
