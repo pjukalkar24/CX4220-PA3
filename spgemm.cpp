@@ -44,13 +44,12 @@ void spgemm_2d(int m, int p, int n,
 
     // allgather A across the row
     // allgather sendcounts from each proc in row
-    std::vector<int> A_sendcounts(q);
+    std::vector<int> A_sendcounts(q, 0);
     int A_local_size = A.size();
     MPI_Allgather(&A_local_size, 1, MPI_INT, A_sendcounts.data(), 1, MPI_INT, row_comm);
     // calculate displacements
-    std::vector<int> A_displs(q);
+    std::vector<int> A_displs(q, 0);
     int total_A_size = 0;
-    A_displs[0] = 0;
     for (int i = 0; i < q; i++) {
         A_displs[i] = total_A_size;
         total_A_size += A_sendcounts[i];
@@ -63,13 +62,12 @@ void spgemm_2d(int m, int p, int n,
 
     // allgather B across the col
     // allgather sendcounts from each proc in col
-    std::vector<int> B_sendcounts(q);
+    std::vector<int> B_sendcounts(q, 0);
     int B_local_size = B.size();
     MPI_Allgather(&B_local_size, 1, MPI_INT, B_sendcounts.data(), 1, MPI_INT, col_comm);
     // calculate displs
-    std::vector<int> B_displs(q);
+    std::vector<int> B_displs(q, 0);
     int total_B_size = 0;
-    B_displs[0] = 0;
     for (int i = 0; i < q; i++) {
         B_displs[i] = total_B_size;
         total_B_size += B_sendcounts[i];
@@ -103,8 +101,10 @@ void spgemm_2d(int m, int p, int n,
         }
     }
 
+    C.resize(C_map.size());
+    int idx = 0;
     for (const auto &entry : C_map) {
-        C.push_back({entry.first, entry.second});
+        C[idx++] = {entry.first, entry.second};
     }
 
     // if (pr == 1 && pc == 0) {
